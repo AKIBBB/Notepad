@@ -1,0 +1,16 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+  <div class="text-center">
+    <h1 class="display-5 fw-bold">Welcome to LumaNotes</h1>
+    <p class="lead">Where your ideas come to life.</p>
+    {% if user.is_authenticated %}
+      <p class="text-success">You are logged in as <strong>{{ user.username }}</strong>.</p>
+    {% else %}
+      <p class="text-muted">Please login or sign up to continue.</p>
+      <a href="{% url 'signup' %}" class="btn btn-primary">Get Started</a>
+    {% endif %}
+  </div>
+{% endblock %}

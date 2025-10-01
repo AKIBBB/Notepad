@@ -1,0 +1,150 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Edit Note{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0 text-center">Edit Note</h5>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" id="noteForm">
+          {% csrf_token %}
+
+          <!-- Plain Textarea (Resizable by user vertically and horizontally) -->
+          <div class="mb-3">
+            <label class="form-label" for="id_text">Write your note</label>
+            <textarea name="text" id="id_text" rows="4" class="form-control"
+                      style="resize: both; overflow: hidden; min-height: 100px;">{{ note.text }}</textarea>
+          </div>
+
+          <!-- Drawing Tools -->
+          <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+            <label class="mb-0">Tool:</label>
+            <select id="toolSelect" class="form-select form-select-sm w-auto">
+              <option value="pen" selected>Pen</option>
+              <option value="rectangle">Rectangle</option>
+              <option value="triangle">Triangle</option>
+              <option value="eraser">Eraser</option>
+            </select>
+
+            <label class="mb-0">Color:</label>
+            <input type="color" id="colorPicker" value="#000000">
+
+            <label class="mb-0">Line Width:</label>
+            <input type="number" id="lineWidth" value="2" min="1" max="10" class="form-control form-control-sm w-auto">
+
+            <button type="button" id="clearCanvas" class="btn btn-sm btn-danger">Clear</button>
+          </div>
+
+          <!-- Drawing Canvas (Resizable container) -->
+          <div class="mb-3" style="resize: both; overflow: hidden; border:1px solid #ccc; display:inline-block; width:400px; height:300px;">
+            <canvas id="canvas" width="400" height="300" class="border rounded w-100 h-100"></canvas>
+            <input type="hidden" name="drawing" id="drawingInput">
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Update Note</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Fill canvas with white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Load existing drawing
+    {% if note.drawing %}
+    const img = new Image();
+    img.src = '{{ note.drawing.url }}';
+    img.onload = function() {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    {% endif %}
+
+    let drawing=false, currentShape=null, shapes=[], startX=0, startY=0;
+
+    function drawAll() {
+        ctx.fillStyle='white';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        shapes.forEach(shape=>{
+            ctx.strokeStyle=shape.color;
+            ctx.lineWidth=shape.lineWidth;
+            ctx.beginPath();
+            if(shape.type==='rectangle') ctx.strokeRect(shape.x,shape.y,shape.w,shape.h);
+            else if(shape.type==='triangle') {
+                ctx.moveTo(shape.x, shape.y - shape.size/2);
+                ctx.lineTo(shape.x - shape.size/2, shape.y + shape.size/2);
+                ctx.lineTo(shape.x + shape.size/2, shape.y + shape.size/2);
+                ctx.closePath();
+                ctx.stroke();
+            } else if(shape.type==='pen') {
+                ctx.lineCap='round';
+                for(let i=1;i<shape.points.length;i++){
+                    ctx.beginPath();
+                    ctx.moveTo(shape.points[i-1].x, shape.points[i-1].y);
+                    ctx.lineTo(shape.points[i].x, shape.points[i].y);
+                    ctx.stroke();
+                }
+            }
+        });
+    }
+
+    canvas.addEventListener('mousedown', e=>{
+        startX=e.offsetX; startY=e.offsetY;
+        const tool = document.getElementById('toolSelect').value;
+        if(tool==='pen' || tool==='eraser'){
+            drawing=true;
+            currentShape={type:'pen', color: tool==='eraser'?'white':'#000000', lineWidth:2, points:[{x:startX,y:startY}]};
+        } else if(tool==='rectangle'){
+            currentShape={type:'rectangle', x:50, y:50, w:150, h:100, color:'#000000', lineWidth:2};
+            shapes.push(currentShape);
+        } else if(tool==='triangle'){
+            currentShape={type:'triangle', x:200, y:150, size:100, color:'#000000', lineWidth:2};
+            shapes.push(currentShape);
+        }
+    });
+
+    canvas.addEventListener('mousemove', e=>{
+        if(!drawing) return;
+        currentShape.points.push({x:e.offsetX,y:e.offsetY});
+        drawAll();
+    });
+
+    canvas.addEventListener('mouseup', e=>{
+        drawing=false;
+        shapes.push(currentShape);
+        currentShape=null;
+        drawAll();
+    });
+
+    document.getElementById('clearCanvas').addEventListener('click', ()=>{ shapes=[]; drawAll(); });
+
+    // On submit, save canvas as base64
+    document.getElementById('noteForm').addEventListener('submit', function(){
+        const hiddenInput = document.getElementById('drawingInput');
+        hiddenInput.value = canvas.toDataURL('image/png');
+    });
+
+    // Make canvas container resizable without scrollbars
+    const canvasContainer = canvas.parentElement;
+    const resizeObserver = new ResizeObserver(()=>{
+        const tempImage = new Image();
+        tempImage.src = canvas.toDataURL();
+        tempImage.onload = function() {
+            canvas.width = canvasContainer.clientWidth;
+            canvas.height = canvasContainer.clientHeight;
+            ctx.drawImage(tempImage, 0, 0, canvas.width, canvas.height);
+        };
+    });
+    resizeObserver.observe(canvasContainer);
+});
+</script>
+{% endblock %}
