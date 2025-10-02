@@ -23,9 +23,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-4!-csgch3-1*7)91a!r+d-ozd7ke17eq(+mk%aryk$bt84u*dr'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+# SECURITY WARNING: don't run with debug turned on in production!
+  # set to False in production
 
-ALLOWED_HOSTS = ["https://notepad-wf2q.onrender.com/","localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    "notepad-wf2q.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://notepad-wf2q.onrender.com",
+]
+
 
 
 # Application definition
@@ -131,9 +142,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 # settings.py
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://notepad-wf2q.onrender.com",
-]
+
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
