@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-4!-csgch3-1*7)91a!r+d-ozd7ke17eq(+mk%aryk$bt84u*dr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["https://notepad-wf2q.onrender.com/","localhost", "127.0.0.1"]
 
 
 # Application definition
